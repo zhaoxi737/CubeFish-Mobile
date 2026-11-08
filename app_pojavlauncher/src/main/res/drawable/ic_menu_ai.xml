@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 聊天气泡 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,4h18v12H11l-7,5v-5H3z" />
+    <!-- 三个点 -->
+    <path
+        android:fillColor="#FF0A0D12"
+        android:pathData="M7,9h2v2H7zM11,9h2v2h-2zM15,9h2v2h-2z" />
+    <!-- 右上角小闪光 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M19,1l1,2.6L22.6,5L20,6l-1,2.6L18,6l-2.6,-1L18,3.6z" />
+</vector>
