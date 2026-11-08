@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>方块鱼 使用说明</title>
+<style>
+  :root { --bg:#0a0d12; --panel:#111823; --line:#22303f; --text:#e8eef5; --muted:#8fa2b6; --green:#7ed957; --blue:#6b8cff; --warn:#f0b429; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif; font-size: 15px; line-height: 1.75; }
+  header { position: sticky; top: 0; padding: calc(12px + env(safe-area-inset-top)) 16px 12px; background: #0e1520; border-bottom: 1px solid var(--line); font-weight: 800; letter-spacing: 1px; }
+  main { padding: 14px 16px calc(28px + env(safe-area-inset-bottom)); }
+  h2 { font-size: 16px; margin: 22px 0 8px; color: var(--green); }
+  h2:first-of-type { margin-top: 6px; }
+  p, li { color: #d7e1ec; }
+  ol, ul { padding-left: 20px; margin: 8px 0; }
+  code { background: rgba(255,255,255,.07); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .warn { border-color: rgba(240,180,41,.4); background: rgba(240,180,41,.07); }
+  .kbd { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; font-size: 13px; background: #17222e; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 4px; text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; }
+</style>
+</head>
+<body>
+<header>方块鱼 使用说明</header>
+<main>
+
+<h2>1. 为什么还要「登录」？能离线吗？</h2>
+<p>能。Minecraft 启动器需要知道<b>玩家名</b>，所以一定要选一种登录方式，两者选一个就行：</p>
+<div class="card">
+  <p><b>① 本地登录（离线账号）</b> —— 不需要微软账号，随便起个名字就能玩：</p>
+  <p class="muted">适合：单人游戏、局域网联机、自己玩模组。名字要求 3–16 位，只能是英文字母、数字、下划线。</p>
+  <p><b>② 微软账号登录</b> —— 需要正版 Minecraft：</p>
+  <p class="muted">适合：进正版服务器、用正版皮肤/披风。流程是「浏览器打开链接 → 输入设备码 → 授权」。</p>
+</div>
+<p class="muted">第一次打开 App 会看到「登录方式」页面：上面是微软登录，下面的<b>本地登录/离线账号</b>就是免正版那条。已经进过的话，主界面右上角的账户区域可以「添加账户」再选离线。</p>
+
+<h2>2. 怎么安装游戏版本（第一次玩必看）</h2>
+<ol>
+  <li>主界面<b>最上面那一行大按钮</b>（显示「启动游戏 / 开始游戏」的那个）上方有一条<b>灰色的版本栏</b>，显示当前选择的版本（没装过会显示 Select a version / 选择版本）。</li>
+  <li>点这条版本栏 → 弹出<b>「创建配置」</b>页面。</li>
+  <li>先选类型：<b>原版（Vanilla）</b> 就是纯净生存；想玩模组选 <b>Fabric / Forge</b> 那类。</li>
+  <li>接着选 Minecraft 版本（例如 1.21.1）→ 点<b>「安装 / 创建」</b>，它会开始下载游戏本体（几百 MB～1 GB）。</li>
+  <li>下载在后台跑；下完回到主界面，版本栏会变成你刚装的版本，点大按钮就开始游戏。</li>
+</ol>
+<div class="card warn">
+  <p><b>下载慢 / 卡住？</b> 设置里可以把「游戏下载源」换成镜像；没网时可以先用电脑把 <code>.minecraft</code> 版本的文件夹拷进手机的游戏目录再刷新。</p>
+</div>
+
+<h2>3. 模组怎么装？</h2>
+<div class="card">
+  <p><b>方式 A（推荐，最简单）：手动放文件</b></p>
+  <ol>
+    <li>主界面菜单里点 <b>「打开游戏文件夹」</b>。</li>
+    <li>进 <code>mods</code> 文件夹（没有就新建一个）。</li>
+    <li>把电脑上下载的 <code>.jar</code> 模组拷进去（注意：版本要对得上 1.21.1，加载器要对得上 Fabric）。</li>
+    <li>回启动器，启动游戏。模组不生效就检查：游戏版本 + 加载器 + 前置模组（Fabric API 等）三样是否都匹配。</li>
+  </ol>
+  <p class="muted">游戏文件夹一般在：手机内部存储 <code>Android/data/dev.cubefish.mobile.debug/files</code> 里（拿不到就用「打开游戏文件夹」直接跳转）。</p>
+</div>
+<div class="card">
+  <p><b>方式 B（启动器内搜索装）</b>：版本栏 → 创建配置 → 选「整合包/模组」那类 → 里面有模组搜索（Modrinth）。这条路引擎原版就有，但入口比较绕，而且部分界面还是英文。</p>
+</div>
+<p class="muted">方块鱼 AI 助手目前还不会自动装模组（桌面版会，手机版在下一个版本里做）。</p>
+
+<h2>4. 主界面按钮都是干什么的</h2>
+<table>
+  <tr><th>按钮</th><th>作用</th></tr>
+  <tr><td>启动游戏</td><td>用当前选中的版本启动 Minecraft</td></tr>
+  <tr><td>版本栏（底部长条）</td><td>点它选择/安装/管理版本，编辑这个版本的内存、Java、分辨率</td></tr>
+  <tr><td>Wiki / Discord</td><td>上游项目文档与聊天群（英文），不用管</td></tr>
+  <tr><td>自定义控制</td><td>改游戏里的虚拟按键布局（摇杆、按钮位置）</td></tr>
+  <tr><td>执行 .jar 文件</td><td>安装 Fabric/Forge/OptiFine 的安装器 jar（一般用不上）</td></tr>
+  <tr><td>分享日志文件</td><td>把日志发给别人看（崩溃求助用）</td></tr>
+  <tr><td>打开游戏文件夹</td><td>进到存档/模组/配置所在目录</td></tr>
+  <tr><td><b>AI 助手（方块鱼）</b></td><td>让方块鱼看日志、改内存、启动游戏——我们这个版本新加的</td></tr>
+</table>
+
+<h2>5. 游戏里操作</h2>
+<ul>
+  <li>屏幕默认有<b>虚拟摇杆 + 按键</b>，可以点右上角齿轮进「自定义控制」改位置和大小。</li>
+  <li>视角：手指在屏幕空白处拖动；跳跃/潜行/攻击在按钮上。</li>
+  <li>卡/掉帧：设置 → 视频 → 渲染器换 <b>MobileGlues</b>（默认）或关掉「持续性能模式」试试；内存可以用 AI 助手改成 6–8G。</li>
+</ul>
+
+<h2>6. 常见问题</h2>
+<ul>
+  <li><b>点启动没反应 / 闪退</b>：打开 AI 助手说「看看为什么崩了」，它会读日志给原因。</li>
+  <li><b>提示没内存 / 分配过低</b>：AI 助手说「内存调到 8G」，或设置 → Java → 内存分配。</li>
+  <li><b>找不到下载的文件</b>：手机「文件管理 → 下载 / Download」目录；小米手机在「文件管理 → 手机 → 下载」。</li>
+  <li><b>想装模组包（整合包）</b>：在电脑上装好，再把整个 <code>.minecraft</code> 文件夹通过数据线拷到手机对应目录。</li>
+</ul>
+
+<p class="muted" style="margin-top:26px">引擎来自 Amethyst / PojavLauncher（Minecraft Java 上手机的移植层），界面部分还是上游的；方块鱼在这上面加了自己的品牌、AI 助手和这份说明。许可证 LGPL-3.0。</p>
+</main>
+</body>
+</html>
