@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>下载模组</title>
+<style>
+  :root { --bg:#0a0d12; --panel:#111823; --panel2:#16202d; --line:#22303f; --text:#e8eef5; --muted:#8fa2b6; --green:#7ed957; --blue:#6b8cff; --danger:#f87171; --warn:#f0b429; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif; font-size: 15px; display: flex; flex-direction: column; height: 100%; }
+  header { display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top)) 14px 10px; background: #0e1520; border-bottom: 1px solid var(--line); }
+  .title { font-weight: 800; letter-spacing: 1px; }
+  .spacer { flex: 1; }
+  .pill { font-size: 11px; color: #b9e8a1; border: 1px solid rgba(126,217,87,.35); background: rgba(126,217,87,.08); padding: 2px 8px; border-radius: 999px; }
+  .pill.bad { color: #fecaca; border-color: rgba(248,113,113,.45); background: rgba(248,113,113,.1); }
+  button { font: inherit; color: var(--text); background: #17222e; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; font-size: 14px; }
+  button:active { transform: translateY(1px); }
+  button.primary { background: linear-gradient(180deg, #8ce267, #4fa62e); color: #07130a; font-weight: 700; border-color: #3a7f22; }
+  button:disabled { opacity: .5; }
+  .searchbar { display: flex; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: #0b111a; }
+  .searchbar input { flex: 1; min-width: 0; background: #0f1722; border: 1px solid var(--line); border-radius: 10px; color: var(--text); padding: 10px 12px; font: inherit; outline: none; }
+  .searchbar input:focus { border-color: rgba(126,217,87,.5); }
+  #status { padding: 8px 14px; font-size: 12.5px; color: var(--muted); border-bottom: 1px solid rgba(255,255,255,.04); white-space: pre-wrap; }
+  #list { flex: 1; overflow-y: auto; padding: 10px 12px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
+  .item { display: flex; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .item img { width: 48px; height: 48px; border-radius: 10px; background: var(--panel2); flex: 0 0 auto; object-fit: cover; }
+  .item .main { flex: 1; min-width: 0; }
+  .item .name { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .desc { font-size: 12.5px; color: var(--muted); margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .item .meta { font-size: 11.5px; color: #6f8296; margin-top: 4px; }
+  .item button { align-self: center; padding: 8px 12px; white-space: nowrap; }
+  .empty { color: var(--muted); text-align: center; padding: 30px 12px; font-size: 13.5px; line-height: 1.8; }
+  .banner { margin: 10px 12px 0; padding: 10px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.7; border: 1px solid rgba(240,180,41,.4); background: rgba(240,180,41,.08); color: #fde68a; display: none; }
+  .banner.show { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">下载模组</span>
+  <span class="pill" id="ctx">读取中…</span>
+  <span class="spacer"></span>
+  <button id="btnBack">返回</button>
+</header>
+
+<div class="searchbar">
+  <input id="q" placeholder="搜模组，例如 sodium / jei / 小地图" autocomplete="off" />
+  <button id="btnSearch" class="primary">搜索</button>
+</div>
+<div class="banner" id="banner"></div>
+<div id="status">先搜一个试试。</div>
+<div id="list"></div>
+
+<script>
+(function () {
+  var CTX = { mcVersion: '', loader: '', modsDir: '' };
+  var Q = document.getElementById('q');
+  var LIST = document.getElementById('list');
+  var STATUS = document.getElementById('status');
+  var PILL = document.getElementById('ctx');
+  var BANNER = document.getElementById('banner');
+  var installing = {};
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function setStatus(text) { STATUS.textContent = text; }
+
+  window.__cubeFishEvent = function (raw) {
+    var e;
+    try { e = JSON.parse(raw); } catch (err) { return; }
+    if (e.type !== 'mod') return;
+    if (e.stage === 'start') {
+      setStatus('正在安装，请稍等（含前置模组，可能要十几秒）…');
+      return;
+    }
+    var id = Object.keys(installing);
+    for (var i = 0; i < id.length; i++) {
+      if (installing[id[i]]) {
+        installing[id[i]].disabled = false;
+        installing[id[i]].textContent = '安装';
+      }
+    }
+    installing = {};
+    if (e.stage === 'done') {
+      setStatus('✓ ' + (e.summary || '装好了'));
+      BANNER.className = 'banner';
+      BANNER.textContent = '';
+    } else {
+      setStatus('✕ 安装失败：' + (e.message || '未知错误'));
+    }
+  };
+
+  function loadContext() {
+    try {
+      var raw = JSON.parse(CubeFish.getModContext());
+      if (!raw.ok) {
+        PILL.className = 'pill bad';
+        PILL.textContent = '没有选中版本';
+        BANNER.className = 'banner show';
+        BANNER.textContent = '还没有选中版本：先回主界面，用底部「版本栏」创建一个版本（推荐 Fabric），再回来搜模组。';
+        return;
+      }
+      CTX = raw;
+      PILL.textContent = (raw.mcVersion || '?') + ' · ' + (raw.loader || '?');
+      if (raw.loader === 'vanilla') {
+        PILL.className = 'pill bad';
+        BANNER.className = 'banner show';
+        BANNER.textContent = '当前是「原版」版本：模组装进去不会生效。请先在版本栏创建一个 Fabric 或 Forge 版本，再在那边装模组。';
+      }
+    } catch (err) {
+      PILL.textContent = '状态未知';
+    }
+  }
+
+  function render(hits) {
+    LIST.innerHTML = '';
+    if (!hits || hits.length === 0) {
+      LIST.appendChild(el('div', 'empty', '没搜到（也可能是当前版本/加载器不匹配）。\n换个关键词，或先确认版本是 Fabric/Forge。'));
+      return;
+    }
+    hits.forEach(function (hit) {
+      var item = el('div', 'item');
+      var img = document.createElement('img');
+      img.src = hit.icon || '';
+      img.alt = '';
+      item.appendChild(img);
+      var main = el('div', 'main');
+      main.appendChild(el('div', 'name', hit.title || hit.slug));
+      main.appendChild(el('div', 'desc', hit.description || ''));
+      var dl = Number(hit.downloads || 0);
+      main.appendChild(el('div', 'meta', '下载 ' + (dl > 10000 ? Math.round(dl / 1000) + 'k' : dl) + ' 次'));
+      item.appendChild(main);
+      var btn = el('button', 'primary', '安装');
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = '安装中…';
+        installing[hit.id] = btn;
+        try { CubeFish.installMod(hit.id); } catch (err) { setStatus('安装失败：' + err); }
+      });
+      item.appendChild(btn);
+      LIST.appendChild(item);
+    });
+  }
+
+  function doSearch() {
+    var query = Q.value.trim();
+    if (!query) { setStatus('先输入关键词。'); return; }
+    setStatus('搜索「' + query + '」…');
+    LIST.innerHTML = '';
+    try {
+      var raw = JSON.parse(CubeFish.searchMods(query));
+      if (!raw.ok) { setStatus('✕ ' + (raw.summary || raw.message || '搜索失败')); return; }
+      CTX.mcVersion = raw.mcVersion || CTX.mcVersion;
+      CTX.loader = raw.loader || CTX.loader;
+      setStatus('「' + query + '」找到 ' + raw.hits.length + ' 个（' + (raw.mcVersion || '?') + ' / ' + (raw.loader || '?') + '）：点「安装」会自动下载到 mods 目录，并带上必需前置。');
+      render(raw.hits);
+    } catch (err) {
+      setStatus('✕ 搜索失败：' + err);
+    }
+  }
+
+  document.getElementById('btnSearch').addEventListener('click', doSearch);
+  Q.addEventListener('keydown', function (e) { if (e.key === 'Enter') { doSearch(); } });
+  document.getElementById('btnBack').addEventListener('click', function () { try { CubeFish.closePage(); } catch (e) { window.location.href = 'index.html'; } });
+
+  loadContext();
+  setStatus('搜一个试试：sodium（优化）、jei（物品配方）、xaero（小地图）。\n装完回主界面启动游戏即可。');
+})();
+</script>
+</body>
+</html>
