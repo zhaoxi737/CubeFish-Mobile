@@ -1,0 +1,117 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <com.kdt.mcgui.mcAccountSpinner
+        android:id="@+id/account_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_52sdp"
+
+        android:dropDownWidth="@dimen/_250sdp"
+        android:dropDownVerticalOffset="@dimen/_52sdp"
+
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/setting_button"
+        android:layout_width="@dimen/_52sdp"
+        android:layout_height="@dimen/_52sdp"
+        android:background="?attr/selectableItemBackground"
+        android:src="@drawable/ic_menu_settings"
+        android:scaleType="fitCenter"
+        android:paddingVertical="@dimen/_8sdp"
+
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Holding most of the dynamic content -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/container_fragment"
+
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/cubefish_nav"
+        app:layout_constraintTop_toBottomOf="@+id/account_spinner" />
+
+    <!-- 方块鱼：底部导航栏（常驻，进任何页面都能点到） -->
+    <LinearLayout
+        android:id="@+id/cubefish_nav"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_52sdp"
+        android:orientation="horizontal"
+        android:background="#0D141E"
+        android:baselineAligned="false"
+        app:layout_constraintBottom_toTopOf="@+id/progress_layout">
+
+        <TextView
+            android:id="@+id/cubefish_nav_launch"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:text="启动"
+            android:textColor="#E8EEF5"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/cubefish_nav_mods"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:text="模组"
+            android:textColor="#E8EEF5"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/cubefish_nav_ai"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:text="AI 助手"
+            android:textColor="#7ED957"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/cubefish_nav_guide"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:text="说明"
+            android:textColor="#8FA2B6"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/cubefish_nav_files"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:text="文件"
+            android:textColor="#8FA2B6"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+
+    <com.kdt.mcgui.ProgressLayout
+        android:id="@+id/progress_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

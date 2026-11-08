@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>方块鱼 AI 助手</title>
+<style>
+  :root {
+    --bg: #0a0d12;
+    --panel: #111823;
+    --panel2: #16202d;
+    --line: #22303f;
+    --text: #e8eef5;
+    --muted: #8fa2b6;
+    --green: #7ed957;
+    --blue: #6b8cff;
+    --danger: #f87171;
+    --warn: #f0b429;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    font-size: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    display: flex; align-items: center; gap: 8px;
+    padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #0e1520, #0a0d12);
+  }
+  .title { font-weight: 800; letter-spacing: 1px; }
+  .title small { color: var(--muted); font-weight: 400; letter-spacing: 0; margin-left: 6px; }
+  .pill {
+    font-size: 11px; color: #b9e8a1; border: 1px solid rgba(126,217,87,.35);
+    background: rgba(126,217,87,.08); padding: 2px 8px; border-radius: 999px;
+  }
+  .spacer { flex: 1; }
+  button {
+    font: inherit; color: var(--text);
+    background: #17222e; border: 1px solid var(--line);
+    border-radius: 9px; padding: 6px 11px; font-size: 13px;
+  }
+  button:active { transform: translateY(1px); }
+  button.primary { background: linear-gradient(180deg, #8ce267, #4fa62e); color: #07130a; font-weight: 700; border-color: #3a7f22; }
+  button.danger { color: #fecaca; border-color: rgba(248,113,113,.5); background: rgba(248,113,113,.14); }
+  #log { flex: 1; overflow-y: auto; padding: 12px 12px 6px; display: flex; flex-direction: column; gap: 10px; }
+  .bubble { max-width: 92%; padding: 9px 12px; border-radius: 13px; line-height: 1.62; white-space: pre-wrap; word-break: break-word; font-size: 14.5px; }
+  .me { align-self: flex-end; background: linear-gradient(160deg, #2a4bd8, #1e3aa8); border-bottom-right-radius: 4px; }
+  .ai { align-self: flex-start; background: var(--panel2); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .sys { align-self: stretch; background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.3); color: #fecaca; font-size: 13px; }
+  .hint { align-self: stretch; color: var(--muted); font-size: 12.5px; text-align: center; }
+  .tool { align-self: stretch; border: 1px solid var(--line); background: rgba(23,34,46,.7); border-radius: 10px; padding: 7px 10px; font-size: 12.5px; color: var(--muted); }
+  .tool b { color: #9fc4ff; font-weight: 600; }
+  .tool.ok b { color: #86efac; }
+  .tool.bad b { color: #fca5a5; }
+  .tool pre { margin: 4px 0 0; white-space: pre-wrap; word-break: break-all; color: #c3d0dc; font-family: inherit; max-height: 42vh; overflow-y: auto; }
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    background: #0b111a;
+    display: flex; gap: 8px; align-items: flex-end;
+  }
+  textarea {
+    flex: 1; resize: none; min-height: 42px; max-height: 120px;
+    background: #0f1722; color: var(--text); border: 1px solid var(--line);
+    border-radius: 11px; padding: 10px 12px; font: inherit; font-size: 15px; outline: none;
+  }
+  textarea:focus { border-color: rgba(126,217,87,.5); }
+  #send { padding: 10px 16px; }
+  .sheet {
+    position: fixed; inset: 0; background: rgba(4,7,11,.72);
+    display: none; align-items: center; justify-content: center; padding: 18px; z-index: 20;
+  }
+  .sheet.show { display: flex; }
+  .card {
+    width: 100%; max-width: 460px; background: #0e1520; border: 1px solid var(--line);
+    border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    max-height: 86vh; overflow-y: auto;
+  }
+  .card h3 { margin: 0 0 2px; font-size: 16px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12.5px; color: var(--muted); }
+  .field input {
+    background: #0a1017; color: var(--text); border: 1px solid var(--line);
+    border-radius: 9px; padding: 9px 11px; font: inherit; font-size: 14px; outline: none;
+  }
+  .note { font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+  .row { display: flex; gap: 8px; justify-content: flex-end; }
+  .dots::after { content: "▋"; animation: blink 1s steps(2, start) infinite; }
+  @keyframes blink { to { visibility: hidden; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">方块鱼 <small>AI 助手</small></span>
+  <span class="pill" id="statusPill">读取中…</span>
+  <span class="spacer"></span>
+  <button id="btnStop" class="danger" style="display:none">停止</button>
+  <button id="btnGuide">说明</button>
+  <button id="btnSettings">设置</button>
+</header>
+
+<div id="log"></div>
+
+<footer>
+  <textarea id="input" rows="1" placeholder="说人话，例如：看看为什么崩了 / 内存调到 8G / 启动游戏"></textarea>
+  <button id="send" class="primary">发送</button>
+</footer>
+
+<div class="sheet" id="sheet">
+  <div class="card">
+    <h3>模型设置</h3>
+    <div class="field">
+      <label>API Key（只存在本机）</label>
+      <input id="cfgKey" type="password" placeholder="sk-..." autocomplete="off" />
+    </div>
+    <div class="field">
+      <label>接口地址</label>
+      <input id="cfgBase" placeholder="https://api.deepseek.com/v1" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label>模型</label>
+      <input id="cfgModel" placeholder="deepseek-chat" autocomplete="off" />
+    </div>
+    <div class="note">
+      手机版目前只做「聊天 + 读状态/日志/改内存/启动游戏」这几件事；
+      装模组、冲突修复在后续版本。日志发给模型前会自动去掉 UUID、路径、邮箱、IP。
+    </div>
+    <div class="row">
+      <button id="btnCancel">取消</button>
+      <button id="btnSave" class="primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var LOG = document.getElementById('log');
+  var INPUT = document.getElementById('input');
+  var SEND = document.getElementById('send');
+  var STOP = document.getElementById('btnStop');
+  var PILL = document.getElementById('statusPill');
+  var SHEET = document.getElementById('sheet');
+
+  var history = [];          // {role:'user'|'assistant'|'tool', content, tool_calls?, tool_call_id?}
+  var pending = null;        // 正在等模型返回：{resolve,reject,textEl,text}
+  var busy = false;
+  var config = { hasKey: false };
+
+  var SYSTEM_PROMPT = [
+    '你是「方块鱼」（CubeFish）手机版 Minecraft 启动器里的 AI 助手。你不是聊天机器人，而是能操作启动器的 agent。',
+    '',
+    '【原则】',
+    '1. 用工具拿事实：版本、内存、模组数、日志内容都必须调用工具确认，不要猜、不要编造版本号。',
+    '2. 回答短：先结论，再下一步，最多 6 行；贴日志只贴关键几行。',
+    '3. 破坏性操作（启动游戏、改内存）先说一句再执行。',
+    '4. 日志已经脱敏（UUID/路径/邮箱/IP 被替换成占位符），不要追问用户这些信息。',
+    '5. 你的工具：get_status / read_log / read_crash / set_memory / list_mods / search_mods / install_mod / list_versions / select_version / open_game_folder / launch_game / plan。',
+    '   装模组用 search_mods 找 → install_mod 装（自动带前置）。',
+    '   冲突排查用 check_mod_conflicts，能修就调 fix_mod_conflicts（需要联网装前置）。',
+    '   查资料用 web_search → web_fetch。整合包 .mrpack 用 install_modpack（用户得先告出文件路径，或提示放 /sdcard/Download）。',
+    '   手机版没有的能力：改启动器源码、跑系统命令、写插件、子助手。用户要这些时明确说手机版没有，并给替代做法。',
+    '6. 不确定就说不确定。',
+    '',
+    '【这个 App 怎么用（用户经常问，照这个答，不要编造不存在的按钮）】',
+    '- 登录：第一次打开会进「选择登录方式」。上面的微软 = 正版账号（可进正版服务器）；下面的「本地登录 / 离线账号」= 免正版，起个名字（3-16 位英文字母、数字、下划线）就能玩单机和局域网。',
+    '- 装游戏版本：主界面底部那条版本栏（显示「选择版本」或当前版本）→ 点开是「创建配置」→ 选 原版（Vanilla）或 Fabric/Forge → 选 Minecraft 版本（如 1.21.1）→ 点安装，下载完回主界面点「启动游戏」。',
+    '- 装模组：主界面菜单「打开游戏文件夹」→ 进 mods 文件夹 → 把 .jar 放进去（游戏版本、加载器、前置模组必须匹配，例如 Fabric 需要 Fabric API）。引擎里也有模组搜索入口（版本栏 → 创建配置 → 模组/整合包），但那条路界面偏英文，不推荐新手。',
+    '- 下载慢：设置 → 游戏下载源，换镜像源。',
+    '- 卡/掉帧：设置 → 视频 → 渲染器（默认 MobileGlues）；内存用 set_memory 调到 6-8G。',
+    '- 中文图文说明：主界面最下面的「使用说明（中文）」按钮。',
+  ].join('\n');
+
+  var TOOLS = [
+    { type: 'function', function: { name: 'get_status', description: '查看设备与启动器状态：手机型号、Android 版本、内存、当前版本、渲染器、模组数。', parameters: { type: 'object', properties: {} } } },
+    { type: 'function', function: { name: 'read_log', description: '读取最近一次游戏的日志（已脱敏），用于判断崩溃/报错原因。', parameters: { type: 'object', properties: { lines: { type: 'number', description: '读取最后多少行，默认 120' } } } } },
+    { type: 'function', function: { name: 'set_memory', description: '修改分配给 Minecraft 的内存（MB）。', parameters: { type: 'object', properties: { mb: { type: 'number', description: '例如 4096' } }, required: ['mb'] } } },
+    { type: 'function', function: { name: 'list_mods', description: '列出当前版本已安装的模组文件。', parameters: { type: 'object', properties: {} } } },
+    { type: 'function', function: { name: 'launch_game', description: '启动当前选中的 Minecraft 版本。', parameters: { type: 'object', properties: {} } } },
+    { type: 'function', function: { name: 'search_mods', description: '在 Modrinth 搜模组（按当前游戏版本+加载器筛选）。', parameters: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } } },
+    { type: 'function', function: { name: 'install_mod', description: '安装模组到当前版本（自动带必需前置）。给 query 或 projectId。', parameters: { type: 'object', properties: { query: { type: 'string' }, projectId: { type: 'string' } } } } },
+    { type: 'function', function: { name: 'list_versions', description: '列出本机已下载/未下载完的 Minecraft 版本。', parameters: { type: 'object', properties: {} } } },
+    { type: 'function', function: { name: 'select_version', description: '把某个已下载的版本设为当前版本。', parameters: { type: 'object', properties: { versionId: { type: 'string' } }, required: ['versionId'] } } },
+    { type: 'function', function: { name: 'read_crash', description: '读取最新崩溃报告（已脱敏）。', parameters: { type: 'object', properties: {} } } },
+    { type: 'function', function: { name: 'open_game_folder', description: '打开当前版本的游戏文件夹（模组/存档所在）。', parameters: { type: 'object', properties: {} } } },
+    { type: 'function', function: { name: 'plan', description: '多步任务先列计划。', parameters: { type: 'object', properties: { steps: { type: 'array', items: { type: 'string' } } }, required: ['steps'] } } },
+    { type: 'function', function: { name: 'check_mod_conflicts', description: '检查模组冲突：重复 mod、缺前置、游戏版本不匹配。', parameters: { type: 'object', properties: {} } } },
+    { type: 'function', function: { name: 'fix_mod_conflicts', description: '一键修复模组冲突：删重复旧 jar、用 Modrinth 装缺失前置。', parameters: { type: 'object', properties: {} } } },
+    { type: 'function', function: { name: 'web_search', description: '联网搜索（中文走搜狗，其它走 Bing），返回标题和链接。', parameters: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } } },
+    { type: 'function', function: { name: 'web_fetch', description: '抓网页正文（只允许 https，HTML 转纯文本）。', parameters: { type: 'object', properties: { url: { type: 'string' } }, required: ['url'] } } },
+    { type: 'function', function: { name: 'install_modpack', description: '安装 Modrinth 整合包 .mrpack（需要本机文件路径）。', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } } },
+  ];
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function scroll() { LOG.scrollTop = LOG.scrollHeight; }
+
+  function addBubble(role, text) {
+    var node = el('div', 'bubble ' + role, text == null ? '' : text);
+    LOG.appendChild(node);
+    scroll();
+    return node;
+  }
+
+  function addHint(text) { var node = el('div', 'hint', text); LOG.appendChild(node); scroll(); return node; }
+
+  function addToolCard(name, ok, summary) {
+    var card = el('div', 'tool' + (ok ? ' ok' : ' bad'));
+    card.appendChild(el('b', null, (ok ? '✓ ' : '✕ ') + name));
+    var pre = document.createElement('pre');
+    pre.textContent = summary.length > 1400 ? summary.slice(0, 1400) + '…' : summary;
+    card.appendChild(pre);
+    LOG.appendChild(card);
+    scroll();
+    return card;
+  }
+
+  function refreshStatus() {
+    try {
+      var raw = JSON.parse(CubeFish.getConfig());
+      config = raw;
+      var d = raw.device || {};
+      var parts = [];
+      if (d.versionId) parts.push(d.versionId);
+      if (d.allocatedMb) parts.push(d.allocatedMb + 'MB');
+      if (d.abi) parts.push(d.abi === 'arm64-v8a' ? 'arm64' : d.abi);
+      PILL.textContent = parts.length ? parts.join(' · ') : '未选版本';
+      if (!raw.hasKey) addHint('还没有配置模型 Key：点右上角「设置」填一个（只存本机）。');
+    } catch (e) {
+      PILL.textContent = '状态未知';
+    }
+  }
+
+  /* ---------- 与服务端约定的回调 ---------- */
+  window.__cubeFishEvent = function (raw) {
+    var event;
+    try { event = JSON.parse(raw); } catch (e) { return; }
+    if (event.type === 'delta') {
+      if (!pending) return;
+      pending.text += event.text || '';
+      pending.el.textContent = pending.text;
+      pending.el.classList.add('dots');
+      scroll();
+      return;
+    }
+    if (event.type === 'done') {
+      if (!pending) return;
+      var p = pending;
+      pending = null;
+      p.el.classList.remove('dots');
+      if (!p.text) p.el.remove();
+      p.resolve({ content: event.content || p.text || '', toolCalls: event.toolCalls || [] });
+      return;
+    }
+    if (event.type === 'error') {
+      if (!pending) { addBubble('sys', event.message || '模型出错'); return; }
+      var q = pending;
+      pending = null;
+      q.el.classList.remove('dots');
+      q.reject(new Error(event.message || '模型出错'));
+      return;
+    }
+    if (event.type === 'configSaved') refreshStatus();
+  };
+
+  function chatOnce(messages) {
+    return new Promise(function (resolve, reject) {
+      var node = addBubble('ai', '');
+      pending = { resolve: resolve, reject: reject, el: node, text: '' };
+      try {
+        CubeFish.startChat(JSON.stringify({ messages: messages, tools: TOOLS }));
+      } catch (error) {
+        pending = null;
+        reject(error);
+      }
+    });
+  }
+
+  function buildMessages() {
+    return [{ role: 'system', content: SYSTEM_PROMPT }].concat(history);
+  }
+
+  function setBusy(value) {
+    busy = value;
+    STOP.style.display = value ? '' : 'none';
+    SEND.disabled = value;
+    SEND.textContent = value ? '处理中…' : '发送';
+  }
+
+  async function runAgent(text) {
+    setBusy(true);
+    addBubble('me', text);
+    history.push({ role: 'user', content: text });
+    try {
+      for (var round = 0; round < 6; round += 1) {
+        var reply = await chatOnce(buildMessages());
+        if (reply.toolCalls && reply.toolCalls.length > 0) {
+          history.push({
+            role: 'assistant',
+            content: reply.content || '',
+            tool_calls: reply.toolCalls.map(function (call) {
+              return { id: call.id, type: 'function', function: { name: call.name, arguments: call.arguments } };
+            }),
+          });
+          for (var i = 0; i < reply.toolCalls.length; i += 1) {
+            var call = reply.toolCalls[i];
+            var result;
+            try {
+              result = JSON.parse(CubeFish.runTool(call.name, call.arguments || '{}'));
+            } catch (error) {
+              result = { ok: false, summary: '工具调用失败：' + error };
+            }
+            addToolCard(call.name, result.ok, result.summary || '');
+            history.push({ role: 'tool', tool_call_id: call.id, content: String(result.summary || '') });
+          }
+          continue;
+        }
+        var finalText = (reply.content || '').trim();
+        if (!finalText) finalText = '（模型没有返回内容，换个说法再试一次）';
+        addBubble('ai', finalText);
+        history.push({ role: 'assistant', content: finalText });
+        break;
+      }
+    } catch (error) {
+      addBubble('sys', '失败：' + (error && error.message ? error.message : error));
+    } finally {
+      pending = null;
+      setBusy(false);
+      refreshStatus();
+    }
+  }
+
+  function send() {
+    if (busy) return;
+    var text = INPUT.value.trim();
+    if (!text) return;
+    INPUT.value = '';
+    INPUT.style.height = 'auto';
+    runAgent(text);
+  }
+
+  SEND.addEventListener('click', send);
+  STOP.addEventListener('click', function () {
+    try { CubeFish.stopChat(); } catch (e) {}
+    if (pending) {
+      var p = pending;
+      pending = null;
+      p.el.classList.remove('dots');
+      if (!p.text) p.el.remove();
+      p.reject(new Error('已停止'));
+    }
+    setBusy(false);
+  });
+  INPUT.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); send(); }
+  });
+  INPUT.addEventListener('input', function () {
+    INPUT.style.height = 'auto';
+    INPUT.style.height = Math.min(120, INPUT.scrollHeight) + 'px';
+  });
+
+  document.getElementById('btnGuide').addEventListener('click', function () { window.location.href = 'guide.html'; });
+  document.getElementById('btnSettings').addEventListener('click', function () {
+    var raw = {};
+    try { raw = JSON.parse(CubeFish.getConfig()); } catch (e) {}
+    document.getElementById('cfgKey').value = '';
+    document.getElementById('cfgBase').value = raw.baseUrl || 'https://api.deepseek.com/v1';
+    document.getElementById('cfgModel').value = raw.model || 'deepseek-chat';
+    SHEET.classList.add('show');
+  });
+  document.getElementById('btnCancel').addEventListener('click', function () { SHEET.classList.remove('show'); });
+  document.getElementById('btnSave').addEventListener('click', function () {
+    var key = document.getElementById('cfgKey').value.trim();
+    var base = document.getElementById('cfgBase').value.trim();
+    var model = document.getElementById('cfgModel').value.trim();
+    try {
+      CubeFish.saveConfig(base, model, key);
+      addHint(key ? '已保存模型设置（Key 只存在本机）' : '已保存接口设置');
+    } catch (e) {}
+    SHEET.classList.remove('show');
+    refreshStatus();
+  });
+
+  refreshStatus();
+  addBubble('ai', '我是方块鱼手机版的助手，能直接操作启动器：\n· 看设备/版本/内存/模组数、读日志和崩溃报告\n· 改内存、切换版本\n· 搜模组并安装（自动带前置）\n· 打开游戏文件夹、启动游戏\n\n说人话就行，比如「装个 sodium」「为什么崩了」「内存调到 8G」。');
+  addHint('第一次用先点右上角「设置」填 API Key。');
+  addHint('不知道怎么装游戏版本/装模组？点右上角「说明」看中文图文教程。');
+})();
+</script>
+</body>
+</html>
